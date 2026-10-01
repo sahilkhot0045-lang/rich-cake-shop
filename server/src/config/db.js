@@ -17,22 +17,22 @@ export const connectDB = async () => {
     return cached.conn;
   }
 
-  const isVercel = Boolean(process.env.VERCEL);
+  const isVercel = Boolean(process.env.VERCEL || process.env.VERCEL_ENV || process.env.NOW_REGION);
   const isProd = process.env.NODE_ENV === 'production';
   const uri = process.env.MONGODB_URI;
 
-  // In Vercel or Production, require a live cloud MongoDB (like MongoDB Atlas)
-  if (isVercel || (isProd && uri && !uri.includes('127.0.0.1') && !uri.includes('localhost'))) {
-    if (!uri) {
+  // In Vercel or Production, a live cloud database (like MongoDB Atlas) is strictly required
+  if (isVercel || isProd) {
+    if (!uri || uri.includes('127.0.0.1') || uri.includes('localhost')) {
       throw new Error(
-        'Missing MONGODB_URI environment variable! In production/Vercel, a MongoDB Atlas connection string is required. ' +
-        'Please add MONGODB_URI in your Vercel Project Settings > Environment Variables.'
+        'Cloud deployments on Vercel cannot connect to 127.0.0.1 (localhost). ' +
+        'Please add your MongoDB Atlas cloud URI (mongodb+srv://...) in Vercel Project Settings > Environment Variables.'
       );
     }
 
     if (!cached.promise) {
       cached.promise = mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 8000,
       }).then((m) => m);
     }
 
