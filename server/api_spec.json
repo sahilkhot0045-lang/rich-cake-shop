@@ -1,0 +1,192 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Rich Cake Shop REST API",
+    "version": "1.0.0",
+    "description": "Production REST API for Rich Cake Shop (MERN E-Commerce)"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/v1",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new customer account",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["name", "email", "phone", "password"]
+              }
+            }
+          }
+        },
+        "responses": { "201": { "description": "User created with JWT token" } }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Authenticate user and issue JWT",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Login successful" } }
+      }
+    },
+    "/products": {
+      "get": {
+        "summary": "List products with search, filters, and pagination",
+        "parameters": [
+          { "name": "search", "in": "query", "schema": { "type": "string" } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "flavour", "in": "query", "schema": { "type": "string" } },
+          { "name": "eggless", "in": "query", "schema": { "type": "boolean" } },
+          { "name": "minPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "maxPrice", "in": "query", "schema": { "type": "number" } },
+          { "name": "sort", "in": "query", "schema": { "type": "string" } },
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
+        ],
+        "responses": { "200": { "description": "Paginated list of products" } }
+      }
+    },
+    "/products/check-pincode": {
+      "get": {
+        "summary": "Check PIN code delivery eligibility and calculate authoritative fee in paise",
+        "parameters": [
+          { "name": "pincode", "in": "query", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Eligibility and fee" } }
+      }
+    },
+    "/products/{slug}": {
+      "get": {
+        "summary": "Get product details by slug",
+        "parameters": [
+          { "name": "slug", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Product details with variants and approved reviews" } }
+      }
+    },
+    "/cart": {
+      "get": { "summary": "Get current user or guest cart", "responses": { "200": { "description": "Cart items and totals" } } }
+    },
+    "/cart/items": {
+      "post": {
+        "summary": "Add item to cart",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "productId": { "type": "string" },
+                  "variantId": { "type": "string" },
+                  "quantity": { "type": "integer" },
+                  "eggless": { "type": "boolean" },
+                  "flavour": { "type": "string" },
+                  "inscription": { "type": "string" }
+                }
+              }
+            }
+          }
+        },
+        "responses": { "200": { "description": "Updated cart" } }
+      }
+    },
+    "/delivery/slots": {
+      "get": {
+        "summary": "Get available delivery slots for a date with real-time remaining capacities",
+        "parameters": [
+          { "name": "date", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "orderType", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Slot list with remaining capacity and feasibility" } }
+      }
+    },
+    "/orders/create-razorpay-order": {
+      "post": {
+        "summary": "Server-side price validation and Razorpay order creation",
+        "responses": { "200": { "description": "Razorpay order ID and authoritative amount in paise" } }
+      }
+    },
+    "/orders/verify-payment": {
+      "post": {
+        "summary": "HMAC-SHA256 signature verification and order confirmation",
+        "responses": { "200": { "description": "Confirmed order" } }
+      }
+    },
+    "/orders/create-offline-order": {
+      "post": {
+        "summary": "Place COD or Pay on Pickup order subject to store limits",
+        "responses": { "201": { "description": "Confirmed order" } }
+      }
+    },
+    "/orders/track/{orderNumber}": {
+      "get": {
+        "summary": "Public milestone tracking by order number",
+        "parameters": [
+          { "name": "orderNumber", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": { "200": { "description": "Order milestone progress and items" } }
+      }
+    },
+    "/custom-cakes": {
+      "post": {
+        "summary": "Submit a custom cake request with reference images and specifications",
+        "responses": { "201": { "description": "Request submitted with indicative estimate" } }
+      }
+    },
+    "/custom-cakes/{id}/accept-quote": {
+      "post": {
+        "summary": "Customer accepts official chef quote and initiates deposit payment",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Razorpay payment session for deposit" } }
+      }
+    },
+    "/admin/dashboard": {
+      "get": {
+        "summary": "Admin telemetry: verified revenue, order status counts, low stock alerts",
+        "security": [{ "bearerAuth": [] }],
+        "responses": { "200": { "description": "Dashboard statistics" } }
+      }
+    },
+    "/admin/orders/{id}/status": {
+      "post": {
+        "summary": "Enforce valid state transition and automatic restock on cancellation",
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Updated order status" } }
+      }
+    },
+    "/admin/orders/export/csv": {
+      "get": {
+        "summary": "Stream filtered orders to CSV spreadsheet",
+        "responses": { "200": { "description": "CSV attachment file" } }
+      }
+    }
+  }
+}
